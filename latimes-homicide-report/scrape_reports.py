@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import os, sys
+import os, sys, json
 import requests
 import hashlib
 from pyquery import PyQuery as pq
@@ -27,6 +27,7 @@ def parse_one(url):
     content = download(url)
     jq = pq(content)
     data = {
+        "id": jq(jq("script")[-8]).text().split('ids: [')[1].split(']')[0],
         "url": url,
         "name": jq("h1").text().split(",")[0],
         "picture": jq("img.homicide-photo").attr.src,
@@ -36,7 +37,10 @@ def parse_one(url):
         "age_at_death": "",
         "cause_of_death": "",
         "date_of_death": jq("img.homicide-photo").attr.title.split('(')[1].rstrip(')'),
-        "geoloc": "",
+        "geoloc": {
+            "long": "",
+            "lat": ""
+        },
         "adress": "",
         "city": "",
         "stories": [],
@@ -67,7 +71,8 @@ def parse_one(url):
                 print >> sys.stderr, "WARNING: unknown field found: %s in %s" % (litxt, url)
             else:
                 data[field] = val
-
+    geojson = json.loads(download("http://homicide.latimes.com/api/homicide.geojson?id=%s&permissive=True" % data["id"]))
+    data["geoloc"]["long"], data["geoloc"]["lat"] = geojson["geojson"]["features"][0]["geometry"]["coordinates"]
     data["adress"] = "\n".join(adress[::-1])
     data["city"] = adress[0]
     nexturl = "http://homicide.latimes.com" + jq(".prev a").attr.href
@@ -75,7 +80,6 @@ def parse_one(url):
 
 
 # TODO
-# - handle geoloc from map
 # - handle skip stories
 # - handle comments
 
