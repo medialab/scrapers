@@ -110,3 +110,5 @@ if __name__ == "__main__":
             print nexturl
             data, nexturl = parse_one(nexturl)
             results.append(data)
+        with open("results.json", "w") as f:
+            json.dump(results, f)
