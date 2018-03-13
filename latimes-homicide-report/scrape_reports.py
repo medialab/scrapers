@@ -3,7 +3,11 @@
 import os, sys, json
 import requests
 import hashlib
+from datetime import datetime
 from pyquery import PyQuery as pq
+
+
+datize = lambda dat: datetime.strptime("March 10, 2018", "%B %d, %Y").isoformat()[:10]
 
 
 def download(url, retries=3):
@@ -26,28 +30,27 @@ def download(url, retries=3):
 def parse_one(url):
     content = download(url)
     jq = pq(content)
+    img = jq("img.homicide-photo")
+    author = jq(".author a")
     data = {
         "id": jq(jq("script")[-8]).text().split('ids: [')[1].split(']')[0],
         "url": url,
         "name": jq("h1").text().split(",")[0],
-        "picture": jq("img.homicide-photo").attr.src,
-        "gender": "",
-        "ethnicity": "",
-        "agency": "",
-        "age_at_death": "",
-        "cause_of_death": "",
-        "date_of_death": jq("img.homicide-photo").attr.title.split('(')[1].rstrip(')'),
-        "geoloc": {
-            "long": "",
-            "lat": ""
-        },
-        "adress": "",
-        "city": "",
+        "picture": img.attr.src if img else None,
+        "gender": None,
+        "ethnicity": None,
+        "agency": None,
+        "age_at_death": None,
+        "cause_of_death": None,
+        "date_of_death": img.attr.title.split('(')[1].rstrip(')') if img else datize(jq(".death-date").text()),
+        "geoloc": None,
+        "adress": None,
+        "city": None,
         "stories": [],
         "obituary": "\n".join([jq(p).text() for p in jq(".body p") if not jq(p).html().startswith("<em>")]),
         "obituary_date": jq(".post-date time").attr.datetime,
-        "obituary_author_name": jq(".author a").text(),
-        "obituary_author_email": jq(".author a").attr.href.split(":")[1],
+        "obituary_author_name": author.text() if author else None,
+        "obituary_author_email": author.attr.href.split(":")[1] if author else None,
         "comments": []
     }
     adress = []
@@ -71,8 +74,10 @@ def parse_one(url):
                 print >> sys.stderr, "WARNING: unknown field found: %s in %s" % (litxt, url)
             else:
                 data[field] = val
-    geojson = json.loads(download("http://homicide.latimes.com/api/homicide.geojson?id=%s&permissive=True" % data["id"]))
-    data["geoloc"]["long"], data["geoloc"]["lat"] = geojson["geojson"]["features"][0]["geometry"]["coordinates"]
+    geojson = download("http://homicide.latimes.com/api/homicide.geojson?id=%s&permissive=True" % data["id"])
+    if geojson:
+        data["geoloc"] = {}
+        data["geoloc"]["long"], data["geoloc"]["lat"] = json.loads(geojson)["geojson"]["features"][0]["geometry"]["coordinates"]
     data["adress"] = "\n".join(adress[::-1])
     data["city"] = adress[0]
     nexturl = "http://homicide.latimes.com" + jq(".prev a").attr.href
@@ -86,7 +91,7 @@ def parse_one(url):
 if __name__ == "__main__":
     if not os.path.exists(".cache"):
         os.makedirs(".cache")
-    data, nexturl = parse_one("http://homicide.latimes.com/post/gabriel-fernandez/")
+    data, nexturl = parse_one("http://homicide.latimes.com/post/daniel-anthony-sanchez/")
     from pprint import pprint
     pprint(data)
     print nexturl
