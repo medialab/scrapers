@@ -4,4 +4,4 @@ This repository gathers multiple scrapers written by SciencePo's [médialab](htt
 
 ## List of scrapers
 
-* TODO
+* Los Angeles Times, Homicide Report<br>[http://homicide.latimes.com/](http://homicide.latimes.com/)<br>[`./latimes-homicide-report`](./latimes-homicide-report)
