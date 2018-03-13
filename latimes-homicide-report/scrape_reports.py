@@ -93,8 +93,14 @@ if __name__ == "__main__":
         os.makedirs(".cache")
     if len(sys.argv) > 1:
         url = sys.argv[1]
-    url = "http://homicide.latimes.com/post/greggory-casillas/"
-    data, nexturl = parse_one(url)
-    from pprint import pprint
-    pprint(data)
-    print nexturl
+        data, nexturl = parse_one(url)
+        from pprint import pprint
+        pprint(data)
+        print nexturl
+    else:
+        results = []
+        nexturl = "http://homicide.latimes.com/post/daniel-anthony-sanchez/"
+        while nexturl:
+            print nexturl
+            data, nexturl = parse_one(nexturl)
+            results.append(data)
