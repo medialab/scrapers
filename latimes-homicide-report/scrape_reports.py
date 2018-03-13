@@ -30,8 +30,13 @@ def download(url, retries=3):
 def parse_one(url):
     content = download(url)
     jq = pq(content)
+    nexturl = "http://homicide.latimes.com" + jq(".prev a").attr.href
+    details = jq(".hidden-phone .detail ul.aspects li")
+    if not details:
+        return None, nexturl
     img = jq("img.homicide-photo")
     author = jq(".author a")
+    article = [p for p in jq(".body p") if jq(p).html()]
     data = {
         "id": jq(jq("script")[-8]).text().split('ids: [')[1].split(']')[0],
         "url": url,
@@ -47,14 +52,14 @@ def parse_one(url):
         "adress": None,
         "city": None,
         "stories": [],
-        "obituary": "\n".join([jq(p).text() for p in jq(".body p") if not jq(p).html().startswith("<em>")]),
+        "obituary": "\n".join([jq(p).text() for p in article if not jq(p).html().startswith("<em>")]),
         "obituary_date": jq(".post-date time").attr.datetime,
         "obituary_author_name": author.text() if author else None,
         "obituary_author_email": author.attr.href.split(":")[1] if author else None,
         "comments": []
     }
     adress = []
-    for li in jq(".hidden-phone .detail ul.aspects li"):
+    for li in details:
         litxt = jq(li).text()
         if ":" not in litxt:
             adress.append(litxt)
@@ -78,14 +83,14 @@ def parse_one(url):
     if geojson:
         data["geoloc"] = {}
         data["geoloc"]["long"], data["geoloc"]["lat"] = json.loads(geojson)["geojson"]["features"][0]["geometry"]["coordinates"]
-    data["adress"] = "\n".join(adress[::-1])
-    data["city"] = adress[0]
-    nexturl = "http://homicide.latimes.com" + jq(".prev a").attr.href
+    if adress:
+        data["adress"] = "\n".join(adress[::-1])
+        data["city"] = adress[0]
     return data, nexturl
 
 
 # TODO
-# - handle skip stories
+# - add list of associated stories
 # - handle comments
 
 if __name__ == "__main__":
