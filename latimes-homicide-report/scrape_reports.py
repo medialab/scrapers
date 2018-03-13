@@ -59,7 +59,7 @@ def parse_one(url):
         if ":" not in litxt:
             adress.append(litxt)
         else:
-            val = litxt.split(":")[1]
+            val = litxt.split(":")[1].strip()
             field = None
             for key, fld in [
                 ("Age:", "age_at_death"),
@@ -91,7 +91,10 @@ def parse_one(url):
 if __name__ == "__main__":
     if not os.path.exists(".cache"):
         os.makedirs(".cache")
-    data, nexturl = parse_one("http://homicide.latimes.com/post/daniel-anthony-sanchez/")
+    if len(sys.argv) > 1:
+        url = sys.argv[1]
+    url = "http://homicide.latimes.com/post/greggory-casillas/"
+    data, nexturl = parse_one(url)
     from pprint import pprint
     pprint(data)
     print nexturl
