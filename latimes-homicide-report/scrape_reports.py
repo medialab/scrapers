@@ -92,6 +92,7 @@ def parse_one(url):
 # TODO
 # - add list of associated stories
 # - handle comments
+# - add multiproc from various starting points ?
 
 if __name__ == "__main__":
     if not os.path.exists(".cache"):
