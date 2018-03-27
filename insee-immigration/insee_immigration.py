@@ -5,7 +5,6 @@ import re
 import csv
 import time
 import random
-import urllib2
 from lxml import etree
 from pyquery import PyQuery as pq
 
