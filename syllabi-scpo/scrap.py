@@ -45,7 +45,7 @@ def download(url, retries=5, _json=False, cachedir=CACHE):
 
 def scrape():
     syllabi = {}
-    keys = ["ID", "URL", "Titre", "Langue"]
+    keys = ["ID", "URL", "Code", "Titre", "Langue"]
 
     translations = {
         "en": {
@@ -105,9 +105,11 @@ def scrape():
                 title_bis = tree.css_first("h1").text()
                 if title != title_bis:
                     print("WARNING: title is different in content (%s) than in metas (%s) for course %s %s" % (title_bis, title, course_id, course_url), file=sys.stderr)
+                code, title = title.split(' - ', 1)
                 syllabi[course_id] = {
                     "ID": course_id,
                     "URL": course_url,
+                    "Code": code,
                     "Titre": title,
                     "Langue": "fr"
                 }
